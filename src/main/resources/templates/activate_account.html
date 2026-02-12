@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Account Activation</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container-table {
+            table-layout: fixed;
+            background-color: #f4f4f4;
+        }
+        .content-box {
+            max-width: 600px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            color: #34495e;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .greeting, p {
+            color: #333333;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .instruction {
+            margin-bottom: 25px;
+            color: #666666;
+        }
+        .activation-code span {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #ecf0f1;
+            color: #34495e;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 5px;
+            border: 1px dashed #bdc3c7;
+        }
+        .activation-link a {
+            display: inline-block;
+            padding: 15px 30px;
+            font-size: 18px;
+            color: #ffffff;
+            background-color: #2ecc71;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            border: 1px solid #2ecc71;
+            transition: background-color 0.3s ease;
+        }
+        .footer p {
+            color: #999999;
+            font-size: 12px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="body-style">
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" class="container-table">
+    <tr>
+        <td align="center" style="padding: 20px 0;">
+
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" class="content-box">
+
+                <tr>
+                    <td align="center" class="header" style="padding: 30px 40px 10px 40px;">
+                        <h1>Activación de Cuenta</h1>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="padding: 20px 40px;">
+                        <p class="greeting" th:text="'Hello ' + ${username} + ','"></p>
+
+                        <p class="instruction">
+                            Por favor, haz clic en el botón de abajo para activar tu cuenta.
+                        </p>
+
+                        <div class="activation-code" style="text-align: center; margin-bottom: 30px;">
+                            <span th:text="${activation_code}"></span>
+                        </div>
+
+                    </td>
+                </tr>
+
+                <tr>
+                    <td align="center" style="padding: 0 40px 40px 40px;">
+                        <div class="activation-link">
+                            <a th:href="${confirmationUrl}" target="_blank">Activa tu Cuenta</a>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="footer" style="padding: 20px 40px; border-top: 1px solid #eeeeee; text-align: center;">
+                        <p>
+                            Si tienes problemas para hacer clic en el botón, copia el código de activación en la aplicación/sitio web.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
