@@ -35,6 +35,22 @@ public class DashboardController {
         return ResponseEntity.ok(dashboardService.getIncomeAndExpenseChartsByDay(from, to, connectedUser));
     }
 
+    @GetMapping("/income/daily")
+    public ResponseEntity<DailyChartResponse> incomeDaily(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Authentication connectedUser) {
+        return ResponseEntity.ok(dashboardService.getDailyIncomeChart(from, to, connectedUser));
+    }
+
+    @GetMapping("/expense/daily")
+    public ResponseEntity<DailyChartResponse> expenseDaily(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+            Authentication connectedUser) {
+        return ResponseEntity.ok(dashboardService.getDailyExpenseChart(from, to, connectedUser));
+    }
+
     // --- Transacciones recientes ---
 
     @GetMapping("/recent-incomes")

@@ -35,28 +35,9 @@ public class DashboardService {
         List<DailyTotalByTypeRow> rows = transactionDashboardRepository.dailyTotalsByType(user.getId(), fromDateTime,
                 toDateTime);
 
-        // Rango de días completo (para que el chart no tenga huecos)
-        List<LocalDate> days = new ArrayList<>();
-        LocalDate cursor = from;
-        while (!cursor.isAfter(to)) {
-            days.add(cursor);
-            cursor = cursor.plusDays(1);
-        }
+        List<LocalDate> days = buildDayRange(from, to);
 
-        // Map: tipo -> (día -> total)
-        Map<TransactionType, Map<LocalDate, BigDecimal>> totals = new EnumMap<>(TransactionType.class);
-        totals.put(TransactionType.INCOME, new HashMap<>());
-        totals.put(TransactionType.EXPENSE, new HashMap<>());
-
-        for (LocalDate d : days) {
-            totals.get(TransactionType.INCOME).put(d, BigDecimal.ZERO);
-            totals.get(TransactionType.EXPENSE).put(d, BigDecimal.ZERO);
-        }
-
-        for (DailyTotalByTypeRow r : rows) {
-            LocalDate day = r.getDay();
-            totals.get(r.getType()).put(day, r.getTotal() == null ? BigDecimal.ZERO : r.getTotal());
-        }
+        Map<TransactionType, Map<LocalDate, BigDecimal>> totals = buildTotalsMap(days, rows);
 
         List<DailyChartPointResponse> incomeChart = days.stream()
                 .map(d -> new DailyChartPointResponse(d.toString(), totals.get(TransactionType.INCOME).get(d)))
@@ -67,6 +48,61 @@ public class DashboardService {
                 .toList();
 
         return new IncomeExpenseDailyChartsResponse(from, to, incomeChart, expenseChart);
+    }
+
+    public DailyChartResponse getDailyIncomeChart(LocalDate from, LocalDate to, Authentication connectedUser) {
+        return getDailyChartByType(TransactionType.INCOME, from, to, connectedUser);
+    }
+
+    public DailyChartResponse getDailyExpenseChart(LocalDate from, LocalDate to, Authentication connectedUser) {
+        return getDailyChartByType(TransactionType.EXPENSE, from, to, connectedUser);
+    }
+
+    private DailyChartResponse getDailyChartByType(TransactionType type, LocalDate from, LocalDate to,
+            Authentication connectedUser) {
+        User user = (User) connectedUser.getPrincipal();
+
+        LocalDateTime fromDateTime = from.atStartOfDay();
+        LocalDateTime toDateTime = to.atTime(LocalTime.MAX);
+
+        List<DailyTotalByTypeRow> rows = transactionDashboardRepository.dailyTotalsByType(user.getId(), fromDateTime,
+                toDateTime);
+
+        List<LocalDate> days = buildDayRange(from, to);
+        Map<TransactionType, Map<LocalDate, BigDecimal>> totals = buildTotalsMap(days, rows);
+
+        List<DailyChartPointResponse> chart = days.stream()
+                .map(d -> new DailyChartPointResponse(d.toString(), totals.get(type).get(d)))
+                .toList();
+
+        return new DailyChartResponse(from, to, chart);
+    }
+
+    private List<LocalDate> buildDayRange(LocalDate from, LocalDate to) {
+        List<LocalDate> days = new ArrayList<>();
+        LocalDate cursor = from;
+        while (!cursor.isAfter(to)) {
+            days.add(cursor);
+            cursor = cursor.plusDays(1);
+        }
+        return days;
+    }
+
+    private Map<TransactionType, Map<LocalDate, BigDecimal>> buildTotalsMap(
+            List<LocalDate> days, List<DailyTotalByTypeRow> rows) {
+        Map<TransactionType, Map<LocalDate, BigDecimal>> totals = new EnumMap<>(TransactionType.class);
+        totals.put(TransactionType.INCOME, new HashMap<>());
+        totals.put(TransactionType.EXPENSE, new HashMap<>());
+
+        for (LocalDate d : days) {
+            totals.get(TransactionType.INCOME).put(d, BigDecimal.ZERO);
+            totals.get(TransactionType.EXPENSE).put(d, BigDecimal.ZERO);
+        }
+
+        for (DailyTotalByTypeRow r : rows) {
+            totals.get(r.getType()).put(r.getDay(), r.getTotal() == null ? BigDecimal.ZERO : r.getTotal());
+        }
+        return totals;
     }
 
     // --- Transacciones recientes ---
