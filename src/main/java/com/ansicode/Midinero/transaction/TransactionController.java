@@ -1,6 +1,7 @@
 package com.ansicode.Midinero.transaction;
 
 import com.ansicode.Midinero.commom.PageResponse;
+import com.ansicode.Midinero.enums.TransactionType;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,7 @@ public class TransactionController {
     @PostMapping("/create")
     public ResponseEntity<TransactionResponse> create(
             @RequestBody @Valid TransactionRequest request,
-            Authentication connectedUser
-    ) {
+            Authentication connectedUser) {
         return ResponseEntity.ok(transactionService.createTransaction(request, connectedUser));
     }
 
@@ -30,17 +30,16 @@ public class TransactionController {
     public ResponseEntity<PageResponse<TransactionResponse>> findAll(
             @RequestParam(name = "page", defaultValue = "0", required = false) int page,
             @RequestParam(name = "size", defaultValue = "10", required = false) int size,
+            @RequestParam(name = "type", required = false) TransactionType type,
             @ParameterObject Pageable pageable,
-            Authentication connectedUser
-    ) {
-        return ResponseEntity.ok(transactionService.findAllTransactionsByUser(page, size, connectedUser));
+            Authentication connectedUser) {
+        return ResponseEntity.ok(transactionService.findAllTransactionsByUser(page, size, type, connectedUser));
     }
 
     @GetMapping("/findById/{id}")
     public ResponseEntity<TransactionResponse> findById(
             @PathVariable Long id,
-            Authentication connectedUser
-    ) {
+            Authentication connectedUser) {
         return ResponseEntity.ok(transactionService.findTransactionById(id, connectedUser));
     }
 
@@ -48,16 +47,14 @@ public class TransactionController {
     public ResponseEntity<TransactionResponse> update(
             @PathVariable Long id,
             @RequestBody @Valid TransactionRequest request,
-            Authentication connectedUser
-    ) {
+            Authentication connectedUser) {
         return ResponseEntity.ok(transactionService.updateTransaction(id, request, connectedUser));
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> delete(
             @PathVariable Long id,
-            Authentication connectedUser
-    ) {
+            Authentication connectedUser) {
         transactionService.deleteTransaction(id, connectedUser);
         return ResponseEntity.noContent().build();
     }

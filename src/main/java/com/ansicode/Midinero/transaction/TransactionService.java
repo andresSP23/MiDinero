@@ -3,6 +3,7 @@ package com.ansicode.Midinero.transaction;
 import com.ansicode.Midinero.category.Category;
 import com.ansicode.Midinero.category.CategoryRepository;
 import com.ansicode.Midinero.commom.PageResponse;
+import com.ansicode.Midinero.enums.TransactionType;
 import com.ansicode.Midinero.handler.BusinessErrorCodes;
 import com.ansicode.Midinero.handler.BusinessException;
 import com.ansicode.Midinero.user.User;
@@ -109,14 +110,20 @@ public class TransactionService {
 
     @Transactional(readOnly = true)
     public PageResponse<TransactionResponse> findAllTransactionsByUser(int page, int size,
+            TransactionType type,
             Authentication connectedUser) {
 
         User user = (User) connectedUser.getPrincipal();
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        // Opción 1 (simple): query directa
-        Page<Transaction> transactions = transactionRepository.findAllByUserId(user.getId(), pageable);
+        Page<Transaction> transactions;
+
+        if (type != null) {
+            transactions = transactionRepository.findAllByUserIdAndTransactionType(user.getId(), type, pageable);
+        } else {
+            transactions = transactionRepository.findAllByUserId(user.getId(), pageable);
+        }
 
         List<TransactionResponse> content = transactions.stream()
                 .map(transactionMapper::toTransactionResponse)
