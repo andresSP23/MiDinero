@@ -128,7 +128,7 @@ public class DashboardService {
                         .id(tx.getId())
                         .description(tx.getDescription())
                         .total(tx.getTotal())
-                        .categoryName(tx.getCategory() != null ? tx.getCategory().getName() : "")
+                        .categoryName(tx.getCategory() != null ? tx.getCategory().getName() : "Categoría eliminada")
                         .createdAt(tx.getCreatedAt())
                         .build())
                 .toList();

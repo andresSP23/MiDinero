@@ -70,7 +70,7 @@ public class ExcelExportService {
                 totalCell.setCellStyle(currencyStyle);
 
                 row.createCell(3).setCellValue(
-                        tx.getCategory() != null ? tx.getCategory().getName() : "");
+                        tx.getCategory() != null ? tx.getCategory().getName() : "Categoría eliminada");
 
                 row.createCell(4).setCellValue(
                         tx.getCreatedAt() != null ? tx.getCreatedAt().format(DATE_FMT) : "");

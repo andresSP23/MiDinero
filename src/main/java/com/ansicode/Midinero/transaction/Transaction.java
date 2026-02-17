@@ -31,24 +31,19 @@ public class Transaction extends AuditedEntity {
     @Column(nullable = false)
     private String description;
 
-
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "category_id", nullable = false)
+    @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)
     private Category category;
-
-
-
-
 
 }

@@ -30,9 +30,23 @@ public class CategoryService {
         // Normalizar
         categoryRequest.setName(categoryRequest.getName().trim());
 
-        // Validar duplicado por usuario
-        if (categoryRepository.existsByUserIdAndNameIgnoreCase(user.getId(), categoryRequest.getName())) {
-            throw new BusinessException(BusinessErrorCodes.CATEGORY_ALREADY_EXISTS);
+        // Validar duplicado por usuario (incluyendo eliminados lógicamente)
+        java.util.Optional<Category> existingCategoryOpt = categoryRepository
+                .findByUserIdAndNameIgnoreCaseNative(user.getId(), categoryRequest.getName());
+
+        if (existingCategoryOpt.isPresent()) {
+            Category existingCategory = existingCategoryOpt.get();
+            if (existingCategory.getIsVisible()) {
+                throw new BusinessException(BusinessErrorCodes.CATEGORY_ALREADY_EXISTS);
+            } else {
+                // Reactivar categoría eliminada
+                existingCategory.setIsVisible(true);
+                existingCategory.setDescription(categoryRequest.getDescription());
+                existingCategory.setCategoryType(categoryRequest.getCategoryType());
+
+                Category savedCategory = categoryRepository.save(existingCategory);
+                return categoryMapper.toCategoryResponse(savedCategory);
+            }
         }
 
         Category category = categoryMapper.toCategory(categoryRequest, user);

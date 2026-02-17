@@ -8,11 +8,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class TransactionMapper {
 
-
     // Crear entidad desde request
     public Transaction toTransaction(TransactionRequest request,
-                                     User user,
-                                     Category category) {
+            User user,
+            Category category) {
 
         return Transaction.builder()
                 .description(request.getDescription())
@@ -26,21 +25,28 @@ public class TransactionMapper {
     // Entity -> Response
     public TransactionResponse toTransactionResponse(Transaction transaction) {
 
+        Long categoryId = null;
+        String categoryName = "Categoría eliminada";
+
+        if (transaction.getCategory() != null) {
+            categoryId = transaction.getCategory().getId();
+            categoryName = transaction.getCategory().getName();
+        }
+
         return TransactionResponse.builder()
                 .id(transaction.getId())
                 .description(transaction.getDescription())
                 .total(transaction.getTotal())
                 .transactionType(transaction.getTransactionType())
-                .categoryId(transaction.getCategory().getId())
-                .categoryName(transaction.getCategory().getName())
+                .categoryId(categoryId)
+                .categoryName(categoryName)
                 .createdAt(transaction.getCreatedAt())
                 .build();
     }
 
-
     public void updateTransactionFromRequest(Transaction transaction,
-                                             TransactionRequest request,
-                                             Category category) {
+            TransactionRequest request,
+            Category category) {
 
         transaction.setDescription(request.getDescription());
         transaction.setTotal(request.getTotal());
