@@ -1,0 +1,57 @@
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    url: jdbc:postgresql://localhost:5435/mi_dinero
+    username: postgres
+    password: ${DB_PASSWORD:postgres} # Valor por defecto seguro para dev
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+    database: PostgreSQL
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  # Configuración de Correo (SMTP)
+  mail:
+    host: smtp-relay.brevo.com
+    port: 587
+    username: ${BREVO_SMTP_USER:tu_usuario_smtp}
+    password: ${BREVO_SMTP_PASS:tu_clave_smtp}
+    protocol: smtp
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: false
+          ssl:
+            trust: smtp-relay.brevo.com
+
+server:
+  port: 8081
+
+app:
+  mail:
+    from: ${MAIL_FROM:no-reply@midinero.com}
+
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET:tu_secreto_super_seguro_debio_ser_cambiado}
+      expiration: 8640000
+
+  mailing:
+    frontend:
+      activation-url: "http://localhost:4200/activate-account"
+      reset-password-url: "http://localhost:4200/reset-password"
+
+  cors:
+    allowed-origin: ${CORS_ORIGIN:http://localhost:4200}

@@ -22,7 +22,11 @@ import java.time.LocalDateTime;
 @Setter
 @Table(name = "transaction")
 @SuperBuilder
+// Soft Delete: Se actualiza el campo 'is_visible' a false en lugar de eliminar
+// el registro físicamente
 @SQLDelete(sql = "UPDATE transaction SET is_visible = false WHERE id = ?")
+// Restricción para que Hibernate recupere solo los registros visibles por
+// defecto
 @SQLRestriction("is_visible = true")
 @AllArgsConstructor
 @NoArgsConstructor
@@ -31,16 +35,21 @@ public class Transaction extends AuditedEntity {
     @Column(nullable = false)
     private String description;
 
+    // Uso de BigDecimal para asegurar precisión en cálculos monetarios
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal total;
 
+    // Se almacena el nombre del Enum para mayor legibilidad en la base de datos
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
 
+    // Relación ManyToOne con carga diferida (Lazy) para optimizar el rendimiento
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // Relación opcional; NotFoundAction.IGNORE evita errores si la categoría
+    // referenciada fue eliminada
     @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "category_id", nullable = false)
     @org.hibernate.annotations.NotFound(action = org.hibernate.annotations.NotFoundAction.IGNORE)

@@ -41,6 +41,9 @@ public class AuthenticationService {
     @Value("${application.mailing.frontend.activation-url}")
     private String activationUrl;
 
+    @Value("${application.mailing.frontend.reset-password-url}")
+    private String resetPasswordUrl;
+
     @Transactional
     public void register(RegistrationRequest request) throws MessagingException {
 
@@ -66,6 +69,8 @@ public class AuthenticationService {
         userRepository.save(user);
         sendValidationEmail(user);
     }
+    // ...
+    // In forgotPassword:
 
     private void sendValidationEmail(User user) throws MessagingException {
 
@@ -166,6 +171,56 @@ public class AuthenticationService {
                 .orElseThrow(() -> new BusinessException(BusinessErrorCodes.USER_NOT_FOUND));
 
         user.setEnabled(true);
+        userRepository.save(user);
+
+        savedToken.setValidatedAt(LocalDateTime.now());
+        tokenRepository.save(savedToken);
+    }
+
+    // ========================
+    // FORGOT PASSWORD
+    // ========================
+
+    @Transactional
+    public void forgotPassword(String email) throws MessagingException {
+        var user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(BusinessErrorCodes.USER_NOT_FOUND));
+
+        // Generate reset token
+        String resetToken = generateAndSaveActivationToken(user);
+
+        // Send email
+        emailService.sendEmail(
+                user.getEmail(),
+                user.fullname(),
+                EmailTemplateName.RESET_PASSWORD,
+                resetPasswordUrl,
+                resetToken,
+                "Reset Password");
+    }
+
+    @Transactional
+    public void resetPassword(String token, String newPassword, String confirmPassword) {
+        if (!newPassword.equals(confirmPassword)) {
+            throw new BusinessException(BusinessErrorCodes.PASSWORDS_DO_NOT_MATCH);
+        }
+
+        Token savedToken = tokenRepository.findByToken(token)
+                .orElseThrow(() -> new BusinessException(BusinessErrorCodes.INVALID_TOKEN));
+
+        if (LocalDateTime.now().isAfter(savedToken.getExpiresAt())) {
+            throw new BusinessException(BusinessErrorCodes.TOKEN_EXPIRED);
+        }
+
+        // Check if token was already used
+        if (savedToken.getValidatedAt() != null) {
+            throw new BusinessException(BusinessErrorCodes.INVALID_TOKEN);
+        }
+
+        var user = userRepository.findById(savedToken.getUser().getId())
+                .orElseThrow(() -> new BusinessException(BusinessErrorCodes.USER_NOT_FOUND));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
         savedToken.setValidatedAt(LocalDateTime.now());

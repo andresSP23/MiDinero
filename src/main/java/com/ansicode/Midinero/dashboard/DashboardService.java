@@ -22,6 +22,7 @@ public class DashboardService {
 
     private final TransactionDashboardRepository transactionDashboardRepository;
 
+    // Obtener datos para gráficas de Ingresos vs Gastos agrupados por día
     public IncomeExpenseDailyChartsResponse getIncomeAndExpenseChartsByDay(
             LocalDate from,
             LocalDate to,
@@ -29,20 +30,27 @@ public class DashboardService {
 
         User user = (User) connectedUser.getPrincipal();
 
+        // Convertir limites de fecha a LocalDateTime para abarcar el día completo
+        // (00:00 - 23:59)
         LocalDateTime fromDateTime = from.atStartOfDay();
         LocalDateTime toDateTime = to.atTime(LocalTime.MAX);
 
+        // Consultar totales agrupados desde el repositorio
         List<DailyTotalByTypeRow> rows = transactionDashboardRepository.dailyTotalsByType(user.getId(), fromDateTime,
                 toDateTime);
 
+        // Generar lista continua de días para evitar huecos en la gráfica
         List<LocalDate> days = buildDayRange(from, to);
 
+        // Organizar datos en un mapa para acceso rápido
         Map<TransactionType, Map<LocalDate, BigDecimal>> totals = buildTotalsMap(days, rows);
 
+        // Construir lista de puntos para la serie de Ingresos
         List<DailyChartPointResponse> incomeChart = days.stream()
                 .map(d -> new DailyChartPointResponse(d.toString(), totals.get(TransactionType.INCOME).get(d)))
                 .toList();
 
+        // Construir lista de puntos para la serie de Gastos
         List<DailyChartPointResponse> expenseChart = days.stream()
                 .map(d -> new DailyChartPointResponse(d.toString(), totals.get(TransactionType.EXPENSE).get(d)))
                 .toList();
@@ -58,6 +66,7 @@ public class DashboardService {
         return getDailyChartByType(TransactionType.EXPENSE, from, to, connectedUser);
     }
 
+    // Método auxiliar para generar gráfica de un solo tipo
     private DailyChartResponse getDailyChartByType(TransactionType type, LocalDate from, LocalDate to,
             Authentication connectedUser) {
         User user = (User) connectedUser.getPrincipal();
@@ -78,6 +87,7 @@ public class DashboardService {
         return new DailyChartResponse(from, to, chart);
     }
 
+    // Crear rango secuencial de fechas
     private List<LocalDate> buildDayRange(LocalDate from, LocalDate to) {
         List<LocalDate> days = new ArrayList<>();
         LocalDate cursor = from;
@@ -88,17 +98,21 @@ public class DashboardService {
         return days;
     }
 
+    // Transformar lista plana de BD a estructura Map, inicializando días vacíos en
+    // cero
     private Map<TransactionType, Map<LocalDate, BigDecimal>> buildTotalsMap(
             List<LocalDate> days, List<DailyTotalByTypeRow> rows) {
         Map<TransactionType, Map<LocalDate, BigDecimal>> totals = new EnumMap<>(TransactionType.class);
         totals.put(TransactionType.INCOME, new HashMap<>());
         totals.put(TransactionType.EXPENSE, new HashMap<>());
 
+        // Inicializar todas las fechas en cero
         for (LocalDate d : days) {
             totals.get(TransactionType.INCOME).put(d, BigDecimal.ZERO);
             totals.get(TransactionType.EXPENSE).put(d, BigDecimal.ZERO);
         }
 
+        // Asignar valores reales encontrados
         for (DailyTotalByTypeRow r : rows) {
             totals.get(r.getType()).put(r.getDay(), r.getTotal() == null ? BigDecimal.ZERO : r.getTotal());
         }
@@ -119,6 +133,7 @@ public class DashboardService {
             Authentication connectedUser) {
         User user = (User) connectedUser.getPrincipal();
 
+        // Limitar resultados mediante PageRequest
         List<Transaction> transactions = transactionDashboardRepository
                 .findByUserIdAndTransactionTypeOrderByCreatedAtDesc(
                         user.getId(), type, PageRequest.of(0, limit));
@@ -128,6 +143,7 @@ public class DashboardService {
                         .id(tx.getId())
                         .description(tx.getDescription())
                         .total(tx.getTotal())
+                        // Manejo seguro de nulos en caso de categoría eliminada
                         .categoryName(tx.getCategory() != null ? tx.getCategory().getName() : "Categoría eliminada")
                         .createdAt(tx.getCreatedAt())
                         .build())
@@ -136,6 +152,7 @@ public class DashboardService {
 
     // --- Balance general (gráfico pastel) ---
 
+    // Calcular totales históricos acumulados
     public BalanceSummaryResponse getBalanceSummary(Authentication connectedUser) {
         User user = (User) connectedUser.getPrincipal();
 

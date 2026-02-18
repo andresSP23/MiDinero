@@ -32,16 +32,28 @@ build/
 ### VS Code ###
 .vscode/
 
-### Sensitive / Environment ###
+### Sensitive / Environment
 .env
+.env.local
+.env.*
+!.env.example
 application-dev.yml
 src/main/resources/application-dev.yml
+src/main/resources/application.yml
 
-### OS ###
+### OS
 .DS_Store
 Thumbs.db
 
-### Logs ###
+### Logs
 *.log
 logs/
 
+### IDEs & Editors
+.vscode/
+.idea/
+*.iws
+*.iml
+*.ipr
+*.class
+bin/

@@ -21,7 +21,8 @@ public class TransactionController {
 
     @PostMapping("/create")
     public ResponseEntity<TransactionResponse> create(
-            @RequestBody @Valid TransactionRequest request,
+            @RequestBody @Valid TransactionRequest request, // Validación del cuerpo de la petición mediante anotaciones
+                                                            // del DTO
             Authentication connectedUser) {
         return ResponseEntity.ok(transactionService.createTransaction(request, connectedUser));
     }
@@ -31,7 +32,7 @@ public class TransactionController {
             @RequestParam(name = "page", defaultValue = "0", required = false) int page,
             @RequestParam(name = "size", defaultValue = "10", required = false) int size,
             @RequestParam(name = "type", required = false) TransactionType type,
-            @ParameterObject Pageable pageable,
+            @ParameterObject Pageable pageable, // Facilita la recepción de parámetros de paginación estándar
             Authentication connectedUser) {
         return ResponseEntity.ok(transactionService.findAllTransactionsByUser(page, size, type, connectedUser));
     }

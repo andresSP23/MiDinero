@@ -12,8 +12,10 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long>,
 
     Optional<Transaction> findByIdAndUserId(Long id, Long userId);
 
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM Transaction t LEFT JOIN FETCH t.category WHERE t.user.id = :userId")
     Page<Transaction> findAllByUserId(Long userId, Pageable pageable);
 
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM Transaction t LEFT JOIN FETCH t.category WHERE t.user.id = :userId AND t.transactionType = :transactionType")
     Page<Transaction> findAllByUserIdAndTransactionType(Long userId, TransactionType transactionType,
             Pageable pageable);
 

@@ -16,7 +16,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -30,31 +29,18 @@ public class TransactionService {
     @Transactional
     public TransactionResponse createTransaction(TransactionRequest request, Authentication connectedUser) {
 
+        // Obtener usuario autenticado del contexto de seguridad
         User user = (User) connectedUser.getPrincipal();
 
-        // Normalizar
-        request.setDescription(request.getDescription().trim());
-
-        // Validaciones
-        if (request.getDescription().isBlank()) {
-            throw new BusinessException(BusinessErrorCodes.TRANSACTION_DESCRIPTION_REQUIRED);
-        }
-        if (request.getTotal() == null || request.getTotal().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(BusinessErrorCodes.TRANSACTION_TOTAL_INVALID);
-        }
-        if (request.getTransactionType() == null) {
-            throw new BusinessException(BusinessErrorCodes.TRANSACTION_TYPE_REQUIRED);
-        }
-        if (request.getCategoryId() == null) {
-            throw new BusinessException(BusinessErrorCodes.TRANSACTION_CATEGORY_REQUIRED);
-        }
-
-        // Buscar SOLO categoría del usuario
+        // Validar que la categoría exista y pertenezca al usuario para evitar accesos
+        // no autorizados (IDOR)
         Category category = categoryRepository.findByIdAndUserId(request.getCategoryId(), user.getId())
                 .orElseThrow(() -> new BusinessException(BusinessErrorCodes.CATEGORY_NOT_FOUND));
 
+        // Mapear DTO a Entidad
         Transaction transaction = transactionMapper.toTransaction(request, user, category);
 
+        // Persistir la transacción
         transaction = transactionRepository.save(transaction);
 
         return transactionMapper.toTransactionResponse(transaction);
@@ -65,33 +51,18 @@ public class TransactionService {
 
         User user = (User) connectedUser.getPrincipal();
 
-        // Normalizar
-        request.setDescription(request.getDescription().trim());
-
-        // Validaciones
-        if (request.getDescription().isBlank()) {
-            throw new BusinessException(BusinessErrorCodes.TRANSACTION_DESCRIPTION_REQUIRED);
-        }
-        if (request.getTotal() == null || request.getTotal().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessException(BusinessErrorCodes.TRANSACTION_TOTAL_INVALID);
-        }
-        if (request.getTransactionType() == null) {
-            throw new BusinessException(BusinessErrorCodes.TRANSACTION_TYPE_REQUIRED);
-        }
-        if (request.getCategoryId() == null) {
-            throw new BusinessException(BusinessErrorCodes.TRANSACTION_CATEGORY_REQUIRED);
-        }
-
-        // Buscar SOLO transacción del usuario
+        // Buscar transacción verificando que pertenezca al usuario autenticado
         Transaction transaction = transactionRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new BusinessException(BusinessErrorCodes.TRANSACTION_NOT_FOUND));
 
-        // Buscar SOLO categoría del usuario
+        // Validar que la nueva categoría también pertenezca al usuario
         Category category = categoryRepository.findByIdAndUserId(request.getCategoryId(), user.getId())
                 .orElseThrow(() -> new BusinessException(BusinessErrorCodes.CATEGORY_NOT_FOUND));
 
+        // Actualizar datos de la entidad existente
         transactionMapper.updateTransactionFromRequest(transaction, request, category);
 
+        // Guardar cambios
         transaction = transactionRepository.save(transaction);
 
         return transactionMapper.toTransactionResponse(transaction);
@@ -102,10 +73,12 @@ public class TransactionService {
 
         User user = (User) connectedUser.getPrincipal();
 
+        // Verificar existencia y propiedad de la transacción antes de eliminar
         Transaction transaction = transactionRepository.findByIdAndUserId(id, user.getId())
                 .orElseThrow(() -> new BusinessException(BusinessErrorCodes.TRANSACTION_NOT_FOUND));
 
-        transactionRepository.delete(transaction); // soft delete si tienes @SQLDelete
+        // Ejecutar borrado lógico (Soft Delete) configurado en la entidad
+        transactionRepository.delete(transaction);
     }
 
     @Transactional(readOnly = true)
@@ -115,20 +88,25 @@ public class TransactionService {
 
         User user = (User) connectedUser.getPrincipal();
 
+        // Configurar paginación ordenando por fecha de creación descendente (más
+        // recientes primero)
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         Page<Transaction> transactions;
 
+        // Filtrar por tipo si se especifica, de lo contrario obtener todas
         if (type != null) {
             transactions = transactionRepository.findAllByUserIdAndTransactionType(user.getId(), type, pageable);
         } else {
             transactions = transactionRepository.findAllByUserId(user.getId(), pageable);
         }
 
+        // Mapear entidades a DTOs de respuesta
         List<TransactionResponse> content = transactions.stream()
                 .map(transactionMapper::toTransactionResponse)
                 .toList();
 
+        // Devuelvo la respuesta paginada estandarizada.
         return new PageResponse<>(
                 content,
                 transactions.getNumber(),
@@ -149,5 +127,4 @@ public class TransactionService {
 
         return transactionMapper.toTransactionResponse(transaction);
     }
-
 }
