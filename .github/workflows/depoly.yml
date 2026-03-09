@@ -45,7 +45,7 @@ jobs:
             envs: DOCKERHUB_USERNAME,DB_URL,DB_USER,DB_PASSWORD,JWT_SECRET,BREVO_SMTP_USER,BREVO_SMTP_PASS,MAIL_FROM,FRONTEND_URL,CORS_ORIGIN
             script: |
               # Forzar el login o el pull con la variable directa
-              docker pull ${{ secrets.DOCKERHUB_USERNAME }/mi-dinero:latest
+              docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest
               
               docker stop mi-dinero || true
               docker rm mi-dinero || true
