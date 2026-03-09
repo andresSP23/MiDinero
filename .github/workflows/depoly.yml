@@ -38,26 +38,38 @@ jobs:
       - name: Deploy en EC2
         uses: appleboy/ssh-action@v1
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            docker stop mi-dinero || true
-            docker rm mi-dinero || true
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest
-            docker run -d \
-              --name mi-dinero \
-              --restart unless-stopped \
-              -p 8081:8081 \
-              -e SPRING_PROFILES_ACTIVE=prod \
-              -e DB_URL=${{ secrets.DB_URL }} \
-              -e DB_USER=${{ secrets.DB_USER }} \
-              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
-              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-              -e BREVO_SMTP_USER=${{ secrets.BREVO_SMTP_USER }} \
-              -e BREVO_SMTP_PASS=${{ secrets.BREVO_SMTP_PASS }} \
-              -e MAIL_FROM=${{ secrets.MAIL_FROM }} \
-              -e FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
-              -e CORS_ORIGIN=${{ secrets.CORS_ORIGIN }} \
-              ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest
-            docker image prune -f
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USER }}
+            key: ${{ secrets.EC2_SSH_KEY }}
+            envs: DOCKERHUB_USERNAME,DB_URL,DB_USER,DB_PASSWORD,JWT_SECRET,BREVO_SMTP_USER,BREVO_SMTP_PASS,MAIL_FROM,FRONTEND_URL,CORS_ORIGIN
+            script: |
+              docker stop mi-dinero || true
+              docker rm mi-dinero || true
+              docker pull $DOCKERHUB_USERNAME/mi-dinero:latest
+              docker run -d \
+                --name mi-dinero \
+                --restart unless-stopped \
+                -p 8081:8081 \
+                -e SPRING_PROFILES_ACTIVE=prod \
+                -e DB_URL="$DB_URL" \
+                -e DB_USER="$DB_USER" \
+                -e DB_PASSWORD="$DB_PASSWORD" \
+                -e JWT_SECRET="$JWT_SECRET" \
+                -e BREVO_SMTP_USER="$BREVO_SMTP_USER" \
+                -e BREVO_SMTP_PASS="$BREVO_SMTP_PASS" \
+                -e MAIL_FROM="$MAIL_FROM" \
+                -e FRONTEND_URL="$FRONTEND_URL" \
+                -e CORS_ORIGIN="$CORS_ORIGIN" \
+                $DOCKERHUB_USERNAME/mi-dinero:latest
+              docker image prune -f
+        env:
+            DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+            DB_URL: ${{ secrets.DB_URL }}
+            DB_USER: ${{ secrets.DB_USER }}
+            DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+            JWT_SECRET: ${{ secrets.JWT_SECRET }}
+            BREVO_SMTP_USER: ${{ secrets.BREVO_SMTP_USER }}
+            BREVO_SMTP_PASS: ${{ secrets.BREVO_SMTP_PASS }}
+            MAIL_FROM: ${{ secrets.MAIL_FROM }}
+            FRONTEND_URL: ${{ secrets.FRONTEND_URL }}
+            CORS_ORIGIN: ${{ secrets.CORS_ORIGIN }}
