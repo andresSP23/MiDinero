@@ -7,11 +7,9 @@ on:
 
 jobs:
   build-and-deploy:
-
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Clonar repositorio
         uses: actions/checkout@v4
 
@@ -32,7 +30,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Construir imagen Docker
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest .
+        run: docker build --no-cache -t ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest .
 
       - name: Subir imagen a Docker Hub
         run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest
@@ -44,16 +42,22 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            # Detener y borrar contenedor antiguo si existe
             docker stop mi-dinero || true
             docker rm mi-dinero || true
-
-            # Traer la nueva imagen
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest
-
-            # Correr el contenedor con el .env de producción
             docker run -d \
               --name mi-dinero \
+              --restart unless-stopped \
               -p 8081:8081 \
-              --env-file /home/ec2-user/app/.env \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e DB_URL=${{ secrets.DB_URL }} \
+              -e DB_USER=${{ secrets.DB_USER }} \
+              -e DB_PASSWORD=${{ secrets.DB_PASSWORD }} \
+              -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+              -e BREVO_SMTP_USER=${{ secrets.BREVO_SMTP_USER }} \
+              -e BREVO_SMTP_PASS=${{ secrets.BREVO_SMTP_PASS }} \
+              -e MAIL_FROM=${{ secrets.MAIL_FROM }} \
+              -e FRONTEND_URL=${{ secrets.FRONTEND_URL }} \
+              -e CORS_ORIGIN=${{ secrets.CORS_ORIGIN }} \
               ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest
+            docker image prune -f
