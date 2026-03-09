@@ -5,6 +5,12 @@ spring:
     multipart:
       max-file-size: 50MB
 
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET}
+      expiration: 86400000
+
 springdoc:
   default-produces-media-type: application/json
   swagger-ui:
