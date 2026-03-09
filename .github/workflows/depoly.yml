@@ -44,6 +44,16 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd app
-            docker-compose pull
-            docker-compose up -d
+            # Detener y borrar contenedor antiguo si existe
+            docker stop mi-dinero || true
+            docker rm mi-dinero || true
+
+            # Traer la nueva imagen
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest
+
+            # Correr el contenedor con el .env de producción
+            docker run -d \
+              --name mi-dinero \
+              -p 8081:8081 \
+              --env-file /home/ec2-user/app/.env \
+              ${{ secrets.DOCKERHUB_USERNAME }}/mi-dinero:latest
